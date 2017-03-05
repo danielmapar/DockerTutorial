@@ -9,7 +9,7 @@
 
 ![Screenshot](./images/container-based virtualization.png)
 
-  - Hypervisors approach is to handle many VMs with their own copy of the OS/Kernel and only manager resources at hardware level.
+  - Hypervisors approach handles many VMs with their own copy of the OS/Kernel and only manages resources at hardware level.
 
     - Porting your VM from one Hypervisor (Virtual box for example) to another one is not easy.
 
