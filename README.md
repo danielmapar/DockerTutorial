@@ -336,7 +336,7 @@
 
     - ```docker images```
 
-    - ```daniel$ docker tag d5dc7cb2053d danielmapar/test_repo:1.00```
+    - ```docker tag d5dc7cb2053d danielmapar/test_repo:1.00```
 
       - Tag will clone the image with the same image id, but with a new repository/tag.
 
