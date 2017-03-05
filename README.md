@@ -433,4 +433,108 @@
 
     - Ex: ```ps -ef | more```
 
-  - 
+    - You will see the redis container ip listed in the ```hosts``` file.
+      - The ```hosts``` file will be hit before the DNS for lookups.
+
+  - ```docker inspect ${redisContainerId} | grep IP```
+
+  ![Screenshot](./images/docker-container-link-ip.png)
+
+  - Let's ping redis inside the app container
+    -  ```docker exec -it ${constainerId} bash```
+
+    - ```ping redis```
+
+  ![Screenshot](./images/docker-ping-redis.png)
+
+### Benefits of Docker Container Link
+
+  - The main use for docker container links is when we build an application with a microservice architecture, we are able to run many independent components in different containers.
+
+  - Docker creates a source tunnel between the containers that doesn't need to expose any ports externally on the container.
+
+
+## Docker Compose
+
+  - Manual linking containers and configuring services become impractical when the number of containers grows
+
+  - Their are 2 versions of the compose file format (both written using YAML)
+
+    - Version 1, which is the legacy format does not support volumes or networks
+
+    - Version 2, which is the most up-to-date format
+
+  - docker-compose.yaml:
+
+    ```
+    version: '2'
+    services:
+        dockerapp:
+          build: . // defines the path to the Dockerfile (this file is in the same directory)
+          ports:
+            - "5000:5000" // host port : container port
+          volumes:
+            - ./app:/app // A volume is a designated directory in a container (persistent even when the container is off). It can be used to share data between the host machine and the container (share source code is an example). This way, we don't need to use COPY on the Dockerfile for the source code. Format is -> host directory : container directory
+
+        redis:
+          image: redis:3.2.0 // We can either build an image, or run an existent image (this is obligatory)
+    ```
+
+    - You might want to ask, why we don't need to define the linking between app and redis. This is because the version 2 docker-compose format supports docker network feature, which allows containers to be discovered by its name automatically. Also, any service can reach any service at its service name. So linking is not required any more (if you are using version 2, version 1 requires it)
+
+    - ```git checkout v0.4```
+
+    - ```docker-compose up -d```: Will build all images and run all the containers
+      - ```-d```: Run in detached mode
+
+    - ```docker-compose start```: Will start the containers
+
+    - Docker compose is a very handy tool to quickly get docker environment up and running
+
+    - Docker compose uses yaml files to store the configuration of all the containers, which removes the burden to maintain our scripts for docker orchestration (such as: starting, linking, stopping)
+
+## Deep Dive into Docker Compose Workflow
+
+  - ```docker-compose ps```: To check the status and ids of containers managed by compose
+    - ```docker exec -it ${containerId} bash```
+
+  - ```docker-compose logs -f```: Will output both containers logs as the file is getting appended (```-f``` option).
+
+  ![Screenshot](./images/docker-compose-logs.png)
+
+  - ```docker-compose logs ${containerName}```
+    - The container name is inside the docker-compose file
+
+  - ```docker-compose rm```: To completely remove the containers
+
+  - Even after removing the containers, docker keeps the image the way it is. Having said that, if I change the Dockerfile and run ```docker-compose up``` again, it will won't apply my changes.
+    - To re-build the image, you need to run ```docker-compose build```
+
+  ![Screenshot](./images/docker-compose-rebuild-1.png)
+
+  ![Screenshot](./images/docker-compose-rebuild-2.png)
+
+  ![Screenshot](./images/docker-compose-commands.png)
+
+## Introduction to Docker Networking
+
+  ![Screenshot](./images/docker-networking-default.png)
+
+  - Docker uses the networking capabilities of the host machine OS to provide networking support for the containers running on the host machine.
+
+  - Once the docker daemon is installed in the host machine, a network interface called docker0 is provisioned on the host, which will be used to bridge the traffic from the outside network to the internal containers hosted on the host machine.
+
+  - Each container connects to the bridge network thought its container network interface. Containers can connect to each other and the outside world through this bridge network interface.
+
+  - Docker Network Types:
+
+    - Closed Network / None Network
+
+    - Bridge Network
+
+    - Host Network
+
+    - Overlay Network
+
+  - ```docker network ls```: Existing docker networks in host machine
+    - Default is: ```bridge```, ```host``` and ```none```
