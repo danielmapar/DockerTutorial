@@ -252,6 +252,8 @@
 
   - It is recommended to chain the ```RUN``` instructions in the Dockerfile to reduce the number of image layers it creates.
 
+  - When writing the ```RUN``` instructions, sort multi-line arguments alphanumerically
+
   - Instead of:
 
     - ```RUN a```
@@ -289,3 +291,69 @@
   - You can also supply a command to be executed right after the container starts by running: ```docker run danielmapar/debian-new-3:1.0 ls /``` or ```docker run danielmapar/debian-new-3:1.0 echo "Test"```
 
   - You can also test it by doing: ```docker start -i ${containerName}```
+
+## Dockerfile Cache
+
+  - Each time Docker executes an instruction it builds a new image layer
+
+  - The next time, if the instruction doesn't change, Docker will simply reuse the existing layer.
+
+  ![Screenshot](./images/docker-cache.png)
+
+  - ```docker build -t danielmapar/debian . --no-cache=true```
+    - Using cache on ```apt-get update``` and ```apt-get install curl``` command can leave you with an older/cached version of ```curl``` instead of the latest
+
+## COPY Instruction
+
+  - The ```COPY``` instruction copies new files or directories from build context and adds them to the file system of the container.
+
+  ![Screenshot](./images/docker-copy.png)
+
+## ADD Instruction
+
+  - The ```ADD``` instruction can not only copy files but also allow you to download a file from the internet and copy to the container.
+
+  - ```ADD``` instruction also has the ability to automatically unpack compressed files
+
+    - ```ADD http://example.com/big.tar.xz /usr/src/things/```
+    - ```RUN tar -xJf /usr/src/things/big.tar.xz -C /usr/src/things```
+
+
+  - The rule is: use ```COPY``` for the sake of transparency, unless you're absolutely sure you need ```ADD```.
+
+  - For the ```ADD``` and ```COPY``` instructions, the contents of the file(s) in the image are examined and a checksum is calculated for each file. The last-modified and last-accessed times of the file(s) are not considered in these checksums. During the cache lookup, the checksum is compared against the checksum in the existing images. If anything has changed in the file(s), such as the contents and metadata, then the cache is invalidated.
+
+## Push Images to Docker Hub
+
+  - Create an account on https://hub.docker.com
+
+  - Setup a repository.
+    - Example: ```test_repo```
+
+  ![Screenshot](./images/docker-hub-repo.png)
+
+  - Tag one of your images with the proper repository:tag
+
+    - ```docker images```
+
+    - ```daniel$ docker tag d5dc7cb2053d danielmapar/test_repo:1.00```
+
+      - Tag will clone the image with the same image id, but with a new repository/tag.
+
+  - Login to docker hub using your account
+
+    - ```docker login```
+
+  - Push the image
+
+    - ```docker push danielmapar/test_repo:1.00```
+
+- Note on Latest Tag
+
+  - Docker will use latest as a default tag when no tag is provided
+
+  - A lot of repositories use it to tag the most up-to-date stable image. However, this is still only a convention and is entirely not being enforced.
+
+  - Images which are tagged latest will not be updated automatically when a newer version of the image is pushed to the repository.
+
+  - Avoid using latest tag
