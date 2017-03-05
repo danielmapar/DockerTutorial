@@ -268,3 +268,24 @@
   - ```docker build -t danielmapar/debian-new-2:1.0 -f Dockerfile-2 .```
 
   ![Screenshot](./images/docker-file-2-image.png)
+
+  - The ```CMD``` instruction specifies what command you want to run **when the container starts up**.
+
+  - If we don't specify ```CMD``` instruction in the Dockerfile, Docker will use the default command defined in the base image
+
+    - The default command for debian jessie is ```bash```
+
+
+  - The ```CMD``` instruction doesn't run when **building** the image, it only runs when the container starts up
+
+  - You can specify the command in either exec form which is preferred or in shell form
+
+    - ```CMD["echo", "Hello World!"]```
+
+  ![Screenshot](./images/docker-cmd-command.png)
+
+  ![Screenshot](./images/docker-cmd-command-run.png)
+
+  - You can also supply a command to be executed right after the container starts by running: ```docker run danielmapar/debian-new-3:1.0 ls /``` or ```docker run danielmapar/debian-new-3:1.0 echo "Test"```
+
+  - You can also test it by doing: ```docker start -i ${containerName}```
