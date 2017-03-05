@@ -244,6 +244,9 @@
 
         7. Back to step 3. (command per command)
 
+  - To remove an image just do: ```docker rmi ${imageName:tag}```
+    - Ex: ```docker rmi danielmapar/flask-test```
+
 ## Dockerfile In Depth
 
   - Each ```RUN``` command will execute the command on the top writable layer of the container, then commit the container as a new image.
@@ -357,3 +360,77 @@
   - Images which are tagged latest will not be updated automatically when a newer version of the image is pushed to the repository.
 
   - Avoid using latest tag
+
+## Dockerize a Hello World Web App
+
+  - ```git clone -b v0.1 git@github.com:jleetutorial/dockerapp.git```
+    - --branch/-b can also take tags and detaches the HEAD at that commit in the resulting repository.
+
+
+  ![Screenshot](./images/docker-flask-dockerfile.png)
+
+  - ```useradd -ms /bin/bash admin```
+    - ```-m```: 	Create the home directory if it does not exist.
+    - ```s```: User's login shell, which defaults to /bin/bash
+
+  - ```USER admin```: This command ensures that we are running the app server under the ```admin``` user.
+    - If you do not specify a user, it will be ran by the root user
+    - An attacker could take advantage of being root
+
+  - ```WORKDIR /app```: This instruction sets the working directory for any RUN, CMD, ENTRYPOINT, COPY and ADD instructions to follow it in the Dockerfile.
+
+  - ```CMD ["python", "app.py"]```: Since we specified ```/app``` as an working dir, we can call app.py directly.
+
+  - ```docker build danielmapar/flask-app:1.0 -f Dockerfile .```: Build image
+
+  - ```docker run -d -p 5000:5000 danielmapar/flask-app:1.0```: Run container
+
+  - ```docker exec -it ${containerId} bash```
+
+  ![Screenshot](./images/inside-flask-container.png)
+
+  - ```ps aux```:
+    - a = show processes for all users
+    - u = display the process's user/owner
+    - x = also show processes not attached to a terminal
+
+  ![Screenshot](./images/processes-inside-container-flask.png)
+
+
+## Docker Container Links
+
+![Screenshot](./images/docker-container-link.png)
+
+### Implement Simple Key-Value Lookup Service
+
+  - ```cd dockerapp```
+
+  - ```git checkout v0.3```
+
+  - ```docker build -t  danielmapar/python-flask-app:2.0 -f Dockerfile .```
+
+  - ```docker run -d -p 5000:5000 danielmapar/python-flask-app:2.0```
+
+  - ```docker logs ${containerId}```
+    - You will see that the connection to the redis container failed. Lets create it
+
+  - ```docker run --name redis redis:3.2.0```
+
+  - ``docker run -d -p 5000:5000 --link redis danielmapar/python-flask-app:2.0```
+    - The ```--link``` property will enable the app container to reach the redis container
+
+  - ```docker logs ${containerId}```
+    - Now the connection is stablished and the app is working
+
+
+### How container links work behind the scenes?
+
+  - ```docker exec -it ${containerId} bash```
+
+  - ```more /etc/hosts```
+    - When the text passed to it is too large to fit on one screen, it pages it. You can scroll down but not up.
+    - ```less``` will let you scroll both ways
+
+    - Ex: ```ps -ef | more```
+
+  - 
