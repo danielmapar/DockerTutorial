@@ -108,13 +108,14 @@
 
   - ```docker run -i -t busybox:1.24```: You will interact with the brand new container
 
-  - **Important**: When you do ```docker -i -t run busybox:1.24``` as soon as you ```exit``` that container will no longer exist (including files, folder, etc..)
+  - **Important**: When you do ```docker -i -t run busybox:1.24``` as soon as you ```exit``` that container will be turned off.
     - This is a foreground execution
 
     - If you run ```docker -i -t run busybox:1.24``` again, that will spin a completely new container with none of the previous files from the last execution.
 
     - Check running containers by doing ```docker ps```
       - ```ps```: Stands for processes snapshot
+      - You can also ```start``` and ```stop``` containers, but that will be covered in the next sections.
 
 ## Deep Dive into Docker Containers
 
@@ -132,6 +133,8 @@
 
   - In case we want to remove the container after exiting it, we can do: ```docker run --rm busybox:1.24```
     - ```--rm```: Remove option
+    - Otherwise, the container will be turned off and hanging in the ```docker ps -a``` list.
+
 
   - We can also specify the name of the container we want to run
     - ```docker run --name hello_world busybox:1.24```
@@ -314,7 +317,7 @@
 
 ## ADD Instruction
 
-  - The ```ADD``` instruction can not only copy files but also allow you to download a file from the internet and copy to the container.
+  - The ```ADD``` instruction cannot only copy files but also allow you to download a file from the internet and copy to the container.
 
   - ```ADD``` instruction also has the ability to automatically unpack compressed files
 
@@ -370,12 +373,14 @@
   ![Screenshot](./images/docker-flask-dockerfile.png)
 
   - ```useradd -ms /bin/bash admin```
-    - ```-m```: 	Create the home directory if it does not exist.
+    - ```-m```: 	Creates the home directory if it does not exist.
     - ```s```: User's login shell, which defaults to /bin/bash
+
 
   - ```USER admin```: This command ensures that we are running the app server under the ```admin``` user.
     - If you do not specify a user, it will be ran by the root user
     - An attacker could take advantage of being root
+
 
   - ```WORKDIR /app```: This instruction sets the working directory for any RUN, CMD, ENTRYPOINT, COPY and ADD instructions to follow it in the Dockerfile.
 
@@ -416,7 +421,7 @@
 
   - ```docker run --name redis redis:3.2.0```
 
-  - ``docker run -d -p 5000:5000 --link redis danielmapar/python-flask-app:2.0```
+  - ```docker run -d -p 5000:5000 --link redis danielmapar/python-flask-app:2.0```
     - The ```--link``` property will enable the app container to reach the redis container
 
   - ```docker logs ${containerId}```
@@ -429,12 +434,14 @@
 
   - ```more /etc/hosts```
     - When the text passed to it is too large to fit on one screen, it pages it. You can scroll down but not up.
+
     - ```less``` will let you scroll both ways
 
     - Ex: ```ps -ef | more```
 
     - You will see the redis container ip listed in the ```hosts``` file.
       - The ```hosts``` file will be hit before the DNS for lookups.
+
 
   - ```docker inspect ${redisContainerId} | grep IP```
 
@@ -458,7 +465,7 @@
 
   - Manual linking containers and configuring services become impractical when the number of containers grows
 
-  - Their are 2 versions of the compose file format (both written using YAML)
+  - There are 2 versions of the compose file format (both written using YAML)
 
     - Version 1, which is the legacy format does not support volumes or networks
 
@@ -486,6 +493,8 @@
 
     - ```docker-compose up -d```: Will build all images and run all the containers
       - ```-d```: Run in detached mode
+
+    - ```docker-compose down```: Stops containers and removes containers, networks, volumes, and images created by ```up```
 
     - ```docker-compose start```: Will start the containers
 
@@ -538,3 +547,23 @@
 
   - ```docker network ls```: Existing docker networks in host machine
     - Default is: ```bridge```, ```host``` and ```none```
+
+## None Network
+
+  - This network does not have any access to the outside world.
+
+  - That container lacks a container interface, so it is totally isolated.
+
+  - This kind of container is called **closed container**
+
+  - ```docker run -d --net none busybox:1.24 sleep 1000```
+
+  ![Screenshot](./images/docker-closed-container.png)
+
+    - Trying to reach Google public DNS
+    - ```ifconfig```: Check containers network interfaces
+    ![Screenshot](./images/docker-closed-container-ifconfig.png)
+
+## Bridge Network
+
+  - Default type of network for docker containers.
