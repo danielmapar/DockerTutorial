@@ -494,7 +494,7 @@
     - ```docker-compose up -d```: Will build all images and run all the containers
       - ```-d```: Run in detached mode
 
-    - ```docker-compose down```: Stops containers and removes containers, networks, volumes, and images created by ```up```
+    - ```docker-compose down```: Stops containers and removes containers, networks, volumes (if you use ```-v```), and images (if you pass ```--rmi all```) created by ```up```
 
     - ```docker-compose start```: Will start the containers
 
@@ -567,3 +567,183 @@
 ## Bridge Network
 
   - Default type of network for docker containers.
+
+  - All the containers in the same bridge network are connected with each other, and they can connect to the outside world via the bridge network interface.
+
+  - ```docker network ls```
+
+  - ```docker network inspect bridge```
+
+  ![Screenshot](./images/docker-bridge-network-details.png)
+
+  - The IP range of this subnet, is from 172.17.0.0 - 172.17.255.255 (16 bits - 2 bytes)
+
+  - ```docker run -d --name container_1 busybox sleep 1000```
+    - This time we don't need to provide the ```--net``` option since bridge is the default mode for docker containers.
+
+  - ```docker exec -it container_1 ifconfig```
+
+  ![Screenshot](./images/docker-bridge-network-ifconfig.png)
+
+  - Lets spin another container and make both communicate with each other.
+
+    - ```docker run -d --name container_2 busybox sleep 1000```
+
+    - ```docker exec -it container_2 ifconfig```
+
+  ![Screenshot](./images/docker-bridge-network-ifconfig-container2.png)
+
+  - ```docker exec -it container_1 ping 172.17.0.3```
+
+  ![Screenshot](./images/docker-bridge-network-ifconfig-container1-ping.png)
+
+    - You can also add ```container_2``` IP address to ```container_1``` by using the ```--link``` flag when spinning the container. That will append ```container_2``` IP inside ```/etc/hosts```
+
+
+  - Containers can also use this private network interface to access the outside world
+
+    - ```docker exec -it container_1 ping 8.8.8.8```
+
+      - Googles public DNS
+
+  - Lets create another bridge network and show that both containers we just created wont be able to access it.
+
+  - ```docker network create --driver bridge my_bridge_network_test```
+
+  - ```docker network ls```
+
+  ![Screenshot](./images/docker-network-ls.png)
+
+  - ```docker network inspect my_bridge_network_test```
+
+  ![Screenshot](./images/docker-network-subnet.png)
+
+  - The IP range of this subnet, is from 172.20.0.0 - 172.20.255.255 (16 bits - 2 bytes)
+
+  - ```docker run -d --name container_3 --net my_bridge_network_test busybox sleep 1000```
+
+  ![Screenshot](./images/docker-container3-network.png)
+
+  - Trying to reach ```container_1``` from ```container_3``` wont be possible since those two containers are on to separate bridge networks. However, we can use a docker feature to enable this communication.
+
+  - ```docker inspect container_1```
+    - That will give you the IP address of the container
+
+
+  - ```docker exec -it container_3 ping 172.17.0.2```
+    - This will fail
+
+  - Docker has a feature that allows us to connect a container to another network.
+    - ```docker network connect bridge container_3```
+    - ```docker exec -it container_3 ifconfig```
+
+
+  ![Screenshot](./images/docker-connect-to-another-bridge-network.png)
+
+  - ```docker exec -it container_3 ping 172.18.0.2```
+
+    - Lets ping ```container_1``` from ```container_3```
+
+
+  ![Screenshot](./images/docker-ping-container1-container3.png)
+
+
+  - Disconnect ```container_3``` from bridge network and maintain it connected to ```my_bridge_network_test```.
+
+    - ```docker network disconnect bridge container_3```
+    - ```docker exec -it container_3 ifconfig```
+
+
+  ![Screenshot](./images/docker-disconnect-from-bridge.png)
+
+
+## Host and Overlay Network
+
+### Host
+
+   - Least protected network model, it adds a container on the host's network stack.
+
+   - Container deployed on the host stack have full access to the host's interface.
+
+   - This kind of containers are usually called **open containers**
+
+   - ```docker run -d --name container_4 --net host busybox sleep 1000```
+
+   - ```docker exec -it container_4 ifconfig```
+
+   ![Screenshot](./images/docker-host-network-model.png)
+
+   - This container has all network interfaces present in the host machine. Those are all accessible by the container
+
+   - Minimum network security level
+
+   - No isolation on this type of open containers, thus leave the container widely unprotected
+
+   - Containers running in the host network stack should see a higher level of performance than those traversing the docker0 bridge and iptables port mapping
+
+### Overlay Network
+
+  - All the network models we covered previously, including none, bridged and host haves one limitation. They can only be deployed on single host.
+
+  - If you want to create a network across multiple host machines, you would need the overlay network model.
+
+  - Require some pre-existing conditions before it can be created.
+
+  - Running Docker engine in Swarm mode.
+    - You can create an overlay network on the manager node.
+    - A key-value store such as consul
+
+  - Overlay Network is widely used in production
+
+## Define Container Networks with Docker Compose
+
+  - Define network models thought docker compose file
+
+  - By default docker compose sets up a single network for your services
+
+  - ```cd dockerapp && git stash && git checkout v0.4```
+
+  - ```docker-compose up -d```
+
+  - ```docker network ls```
+
+  ![Screenshot](./images/docker-compose-bridge-network.png)
+
+  - ```docker-compose down```: Stops containers and removes containers, **networks**, volumes (if you use ```-v```), and images (if you pass ```--rmi all```) created by ```up```
+
+  ![Screenshot](./images/docker-compose-remove-network.png)
+
+  - Specify a network
+
+  ```
+  version: '2'
+
+  networks:
+    my_net:
+      driver: bridge
+
+  services:
+    dockerapp:
+      build: .
+      ports:
+        - "5000:5000"
+      volumes:
+        - ./app:/app
+      networks:
+        - my_net
+
+    redis:
+      image: redis:3.2.0
+      networks:
+        - my_net
+    ```
+
+    - ```docker-compose up -d```
+
+    ![Screenshot](./images/docker-inspect-docker-compose-net.png)
+
+    - ```docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' dockerapp_dockerapp_1```
+
+    ![Screenshot](./images/docker-compose-containers-ids.png)
+
+    ![Screenshot](./images/docker-compose-network-example.png)
