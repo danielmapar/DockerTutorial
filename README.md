@@ -747,3 +747,91 @@
     ![Screenshot](./images/docker-compose-containers-ids.png)
 
     ![Screenshot](./images/docker-compose-network-example.png)
+
+## Write and Run Unit Tests in Docker Containers
+
+  - Unit tests should test some basic functionality of our docker app code, with no reliance on external service
+
+  -  Unit tests should run as quickly as possible so that developers can iterate much faster without being blocked by waiting for the test results
+
+  - Docker containers can spin up in seconds and can create a clean and isolated environment which is a great tool to run unit tests with
+
+
+  - ```git stash && git checkout v0.5```
+
+  - ```docker-compose run ${serviceName} python test.py```
+    - ```docker-compose run dockerapp python test.py```
+    - We over written the default CMD ```CMD ["python", "app.py"]``` to run the test file instead
+
+  ![Screenshot](./images/docker-compose-python-test.png)
+
+  - Pros:
+    - A single image is used through development, testing and production, which greatly ensures the reliability of our tests
+
+  - Cons:
+    - It increases the size of the image
+
+## Introduction to Continuous Integration
+
+  - What is continuous integrations?
+
+    - Continuous integration is a software engineering practice in which isolated changes are immediately tested and reported when they are added to a large code base
+
+    - The goal of CI is to provide rapid feedback so that if a defect is introduced into the code base, it can be identified and corrected as soon as possible
+
+  ![Screenshot](./images/ci-without-docker.png)
+
+  ![Screenshot](./images/ci-with-docker.png)
+
+  - In a world with docker what usually happens is that the CI server would build the docker image after it has build the application. The application goes inside the image, and CI server pushes the image to a Docker registry. Having said that, you can pull the brand new build image from docker registry, and run the container in another host (dev, staging, or even production environment)
+
+  ![Screenshot](./images/circle-ci-and-github.png)
+
+  - Circle CI build steps are defined in a ```circle.yml``` file, which should be checked in to the root of your repository
+
+  ```
+
+  /*
+  CircleCI works well for Python projects. We run automatic inference on each build to determine your dependencies and test commands. If we don’t infer all of your settings, you can also add custom configuration to a circle.yml file checked into your repo’s root directory.
+  */
+
+  machine: // configures the VM on the CircleCI server that runs your tests
+    pre: // configure the VM to install docker 1.10.0, which is above the minimum docker version to support docker-compose command
+      - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
+    services:
+      - docker
+
+  dependencies: // used to setup the projects language specific dependencies. Where we install docker compose
+    pre:
+      - sudo pip install --upgrade pip
+      - sudo pip install docker-compose==1.9.0
+
+  test: // Defines how to run the tests
+    override:
+      - docker-compose up -d
+      - docker-compose run dockerapp python test.py
+
+  ```
+
+  - ```docker-compose run```: Commands you use with run start in new containers with configuration defined by that of the service, including volumes, links, and other details. However, there are two important differences.
+
+  ![Screenshot](./images/circle-ci-project.png)
+
+  ![Screenshot](./images/push-docker-image-to-dockerhub.png)
+
+  ```
+  deployment:
+  hub:
+    branch: /.*/ # [cicle_ci_publish, master]
+    commands:
+      - docker login -e $DOCKER_HUB_EMAIL -u $DOCKER_HUB_USER_ID -p $DOCKER_HUB_PWD
+      - docker tag dockerapp_dockerapp $DOCKER_HUB_USER_ID/dockerapp:$CIRCLE_SHA1
+      - docker tag dockerapp_dockerapp $DOCKER_HUB_USER_ID/dockerapp:latest
+      - docker push $DOCKER_HUB_USER_ID/dockerapp:$CIRCLE_SHA1 # $CIRCLE_SHA1 current commit hash of the repository
+      - docker push  $DOCKER_HUB_USER_ID/dockerapp:latest
+
+  ```
+
+  ![Screenshot](./images/cicle-ci-env1.png)
+
+  ![Screenshot](./images/cicle-ci-env2.png)
