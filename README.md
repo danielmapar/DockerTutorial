@@ -835,3 +835,235 @@
   ![Screenshot](./images/cicle-ci-env1.png)
 
   ![Screenshot](./images/cicle-ci-env2.png)
+
+# Introduction to Running Docker in Production
+
+## Why Running Docker Containers inside VMs
+
+  - To address security concerns.
+    - Ensure people don't access each other network traffic.
+  - Hardware level isolation.
+    - All container share kernel resources, if one container can monopolize kernel resource, it can starve other container in the same host. DDoS attack.
+  - Both Google Container Engine and Amazon EC2 Container Service use VM internally.
+
+  - Docker machine
+     - Can Provision new VMs
+     - Install Docker Engine
+     - Configure Docker Client
+     - We will need virtual box (to provision linux VMs)
+     - Docker machine also provides different drivers for most of the popular cloud providers (Amazon, Google, Digital Ocean). This way you can use docker machine to provision vms in the cloud environment.
+
+## Steps
+
+  - Remove the
+    ```
+    volumes:
+      - ./app:/app
+    ```
+
+  - Copy the app using the Dockerfile. ```COPY app /app```
+
+  ![Screenshot](./images/docker-hub-push-image-to-deploy-prod.png)
+
+## Register Digital Ocean Account to Deploy Dockerized Applications
+
+  - Access ```www.digitalocean.com```
+
+  - Create your account and your OAuth token to access Digital Ocean API
+
+  - We will use ```docker-machine``` to manager our VMs and configure them to run docker-engine + docker containers.
+
+  ![Screenshot](./images/docker-machine-ls-1.png)
+
+  - ```docker-machine create --driver digitalocean --digitalocean-access-token ${token} docker-app-machine```
+
+  - After that we will configure some env variable to setup this new VM inside ```docker-machine```
+
+  ![Screenshot](./images/docker-machine-env-setup.png)
+
+  - ```docker-machine env docker-app-machine```: outputs the environment variables
+
+  - ```eval $(docker-machine env docker-app-machine)```
+
+  - ```docker info```
+
+  - Now we got your docker VM provisioned
+
+  - Make a ```prod.yml``` and change ```build: .``` to ```image: danielmapar/docker-app```
+    - This will get your image tagged latest
+
+  - ```docker-compose -f prod.yml up -d```
+    - This will deploy all the service defined in the docker-compose file inside the remote VM
+
+  - ```docker-machine ls```: Now we can see our ACTIVE digital ocean VM
+
+  ![Screenshot](./images/docker-machine-ls-2.png)
+
+  - ```ACTIVE``` VM means that if we don't specify a VM to run a command, it will run on the ACTIVE one
+
+  ![Screenshot](./images/digital-ocean-vm.png)
+
+  - We can also explore more about the Digital Ocean driver to find other interesting configurations
+
+# Introduction to Docker Swarm and Service Discovery
+
+  - Complicated system that consists of a tone of containers, and those can't fit in a single host. Scale docker for large applications.
+
+  - Docker Swarm is a tool that clusters many Docker Engines and schedules containers.
+
+  - Docker Swarm decides which host to run the container based on your scheduling methods.
+
+  ![Screenshot](./images/docker-swarm-how-it-works.png)
+
+  - We have some remote hosts on the cloud, and Docker Daemons are running on those hosts. The Swarm manager will be connected each and every Docker Daemon based on your discovery method. So now, the Swarm manager knows the status of all the nodes in the cluster.
+
+  - When you decide to run a container, the Swarm manager decides where the container runs, you just need to point your Docker Client to the Swarm manager instead of each and every Docker Daemon.
+
+  - Basically, Docker Swarm can group multiple hosts into a cluster and distribute Docker containers among these hosts. So the work load is divided by the nodes in the Swarm, and this is transparent to the end users.
+
+  - In this way, it outsources the manual schedule and workload from the client to the Swarm manager. It is also possible to point multiple Docker Clients to a single Docker Swarm manager. So then multiple users can share the same cluster.
+
+  - First of all, lets export the digital ocean environment variable to make our life easier: ```export DIGITALOCEAN_ACCESS_TOKEN=asdasdas```
+
+  - Also, let's set the private networking flag on digital ocean, this way it will create a private network for our hosts to communicate: ```export DIGITALOCEAN_PRIVATE_NETWORKING=true```. In this way we can avoid exposing our container to the internet.
+
+  - Finally, we create an environment variable to define the OS for ours hosts in Digital Ocean: ```export DIGITALOCEAN_IMAGE=debian-8-x64```
+
+  - To create a Swarm we need access to a key-value store for service discovery and to store configuration.
+
+  - Service Discovery
+     - Service discovery a key component of most distributed systems and service oriented architectures.
+
+     - In the context of Docker Swarm, service discovery is about how the Swarm Manager keeps tracks of the state of all the nodes in the cluster.
+
+     ![Screenshot](./images/docker-swarm-key-store.png)
+
+     - Swarm supports various distributed key-value stores
+
+      - Consul
+      - Apache ZooKeeper
+
+
+  - Procedures to deploy our Docker app on the Swarm cluster
+
+    - ***Step 1***: Provision a consul machine and run a consul server on top of it as a key value store for service discovery.
+
+    - ***Step 2***: Provision a Docker Swarm master node.
+
+    - ***Step 3***: Provision a Docker Swarm slave node.
+
+    - ***Step 4***: Define the overlay network to support multi-host networking.
+
+    - ***Step 5***: Deploy our Docker app services on the Swarm cluster via Docker compose.
+
+  - ***Step 1***:
+
+    - ```docker-machine create -d digitalocean consul```
+
+    - ```-d``` stands for driver
+
+    - ```docker-machine ssh consul ifconfig```
+       - Will run a command in a machine using ssh
+
+    ![Screenshot](./images/docker-consul-machine-ifconfig.png)
+
+    - The machine contains 4 network interfaces
+      1. ```docker0``` is created by docker in order to enable the communication between containers
+      2. ```eth0``` allows inbound and outbound access to the entire internet
+      3. ```eth1``` a private network that enables private networking between hosts in the same data center
+      4. ```lo``` loop back interface
+
+    - We will use ```eth1``` so we don't expose our key-value store to the entire internet
+
+    - Let's try to ping the public and private ip address of the machine for the sake of testing
+      - ```ping -c 1 $(docker-machine ssh consul 'ifconfig eth0 | grep "inet addrs:" | cut -d: -f2 | cut -d" " -f1')```
+        - ```-c count```: Stop after sending count ECHO_REQUEST packets. With deadline option, ping waits for count ECHO_REPLY packets, until the timeout expires.
+        - This command will print out the command interface of ```eth0```
+        - Grep the line which contains the ip address
+        - Remove all other texts, so the ip address is the only thing left
+        - Then, it tries to ping the echoed ip address from local host
+        - The ping works, since this is the public ip.
+      - ```ping -c 1 $(docker-machine ssh consul 'ifconfig eth1 | grep "inet addrs:" | cut -d: -f2 | cut -d" " -f1')```
+        - This wont work, since it is the private network ip.
+
+    - Let's save the private ip in an environment variable: ```export KV_IP=ping -c 1 $(docker-machine ssh consul 'ifconfig eth1 | grep "inet addrs:" | cut -d: -f2 | cut -d" " -f1')```
+
+    - Next we will connect our docker client to this newly created host
+      - ```eval $(docker-machine env consul)```
+      - ```docker run -d -p ${KV_IP}:8500:8500 --restart always gliderlabs/consult-server -bootstrap```
+        - Docker ```-p``` takes an optional parameter to specify the network interface that the exposed container port should be mapped to. We will map to the private network ip
+        - ```--restart always```: Always restart the container, regardless of the exit status. Restart the container regardless. This insures the consul container is always running
+        - ```gliderlabs/consul-server```: The consul image
+          - ```-bootstrap```: One of the consul server options, which will bootstrap a consul cluster with a single node.
+
+  - ***Step 2 and 3***:
+
+    - ***important note***: Docker now allows orchestrating swarm without setting up counsel by simply using ```docker swarm init``` and ```docker swarm join```.
+
+    - Let's provision a Docker Swarm master node
+
+    - ```docker-machine create -d digitalocean --swarm --swarm-master --swarm-discovery="consul://${KV_IP}:8500" --engine-opt="cluster-store=consul://${KV_IP}:8500" --engine-opt="cluster-advertise=eth1:2376" master```
+
+      - A Swarm cluster consists of a master node, which is effectively the swarm manager.
+      - Swarm manager is responsible for the entire cluster and manages the resources of multiple nodes at scale
+      - The ```swarm-master``` flag is used to identify this node as the Swarm master.
+      - We also need to provide the consult endpoint with its protocol ```consul://```: ```--swarm-discovery="consul://${KV_IP}:8500"```
+      - ```--engine-opt="cluster-store=consul://${KV_IP}:8500" --engine-opt="cluster-advertise=eth1:2376"```: The ```--engine-opt``` lets us set docker daemon options, in this case we are telling docker daemon which key-value store to use for cluster coordination. Also, we set ```cluster-advertise=eth1:2376``` which provides an address that the created docker daemon should advertise as connectable to the cluster, using the key-value store.
+      - Finally, we name this host ```master```
+
+    - Now, lets provision a Docker Swarm slave node
+      - ```docker-machine create -d digitalocean --swarm --swarm-discovery="consul://${KV_IP}:8500" --engine-opt="cluster-store=consul://${KV_IP}:8500" --engine-opt="cluster-advertise=eth1:2376" slave```
+
+    - Let's connect our docker client to the swarm master: ```eval $(docker-machine env -swarm master)```
+
+    - ```docker-machine ls```
+    ![Screenshot](./images/docker-machine-ls-swarm.png)
+
+    - We can check the Docker Swarm cluster information by running ```docker info```
+    ![Screenshot](./images/docker-machine-info-swarm.png)
+
+    - It is important to note that when we spin the master node (swarm master), it also spins a swarm agent inside the vm (master and slave at the same time). That is why we have 2 containers inside the master host, and one single container inside the slave host.
+
+    ![Screenshot](./images/docker-swarm-agent-manager.png)
+
+    - Swarm master is responsible to decide which host to run containers and it can also run containers on it self
+
+  - ***Step 4 and 5***:
+
+    - Let's define the overlay network to support multi-host networking
+
+    - We will need to make one change to the docker-compose file
+
+    ```
+    version: '2'
+    services:
+      dockerapp:
+        extends:
+          file: common.yml
+          service: dockerapp
+        image: danielmapar/dockerapp
+        environment:
+          - constraint:node==master // Make it run in the node-master host
+        depends_on: // This will make docker-compose starts services in dependency order
+          - redis
+        networks:
+          - mynet
+
+      redis:
+        extends:
+          file: common.yml
+          service: redis
+        networks:
+          - mynet
+
+    networks:
+      mynet:
+        driver: overlay
+    ```
+
+    -  Time to run ```docker-compose -f prod.yml up -d```
+    - ```docker ps```
+
+    ![Screenshot](./images/docker-swarm-ps-containers.png)
+
+    - We have our docker-app running in our master host, and redis running on our slave host. This scheduling strategy can be modified in the yml file. Otherwise, it will be automatic
