@@ -560,9 +560,9 @@
 
   ![Screenshot](./images/docker-closed-container.png)
 
-    - Trying to reach Google public DNS
-    - ```ifconfig```: Check containers network interfaces
-    ![Screenshot](./images/docker-closed-container-ifconfig.png)
+  - Trying to reach Google public DNS
+  - ```ifconfig```: Check containers network interfaces
+  ![Screenshot](./images/docker-closed-container-ifconfig.png)
 
 ## Bridge Network
 
