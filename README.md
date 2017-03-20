@@ -62,28 +62,28 @@
 
 ## Important Docker Concepts
 
-  -  Images
-    - Read only templates used to create containers
-    - Are created with the ```docker build``` command, either by us or by other docker users
-    - Are designed to be composed of layers of other images
-    - Are stored in a Docker registry (Docker Hub)
+-  Images
+  - Read only templates used to create containers
+  - Are created with the ```docker build``` command, either by us or by other docker users
+  - Are designed to be composed of layers of other images
+  - Are stored in a Docker registry (Docker Hub)}
 
-  -  Container
-    - If an image is a class, then a container is an instance of a class
-    - They are a lightweight and portable encapsulations of an environment in which to run applications
-    - We create a container from an Image. Inside that container we have all the binaries and dependencies we need to run our application.
+-  Container
+  - If an image is a class, then a container is an instance of a class
+  - They are a lightweight and portable encapsulations of an environment in which to run applications
+  - We create a container from an Image. Inside that container we have all the binaries and dependencies we need to run our application.
 
-  - Registry
-    - Store our images
-    - You can host your own registry, or use Dockers public registry (Docker Hub)
-    - Inside a registry, images are stored in repositories
-    - Docker repository is a collection of different docker images with the same name, that have different tags, each tag represents a version of the image (version of mysql for example)
+- Registry
+  - Store our images
+  - You can host your own registry, or use Dockers public registry (Docker Hub)
+  - Inside a registry, images are stored in repositories
+  - Docker repository is a collection of different docker images with the same name, that have different tags, each tag represents a version of the image (version of mysql for example)
 
-  - Docker Hub (Registry)
-    - New docker users are encouraged to use "official" repositories
-      - Clear documentation
-      - Docker incorporation dedicated a team for reviewing image content
-      - Security updates in a timely manner
+- Docker Hub (Registry)
+  - New docker users are encouraged to use "official" repositories
+    - Clear documentation
+    - Docker incorporation dedicated a team for reviewing image content
+    - Security updates in a timely manner
 
 ## Hello World Docker
 
