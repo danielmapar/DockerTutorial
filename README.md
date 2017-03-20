@@ -62,8 +62,8 @@
 
 ## Important Docker Concepts
 
-  -  Images
-
+  - Images
+  
     - Read only templates used to create containers
 
     - Are created with the ```docker build``` command, either by us or by other docker users
@@ -72,7 +72,7 @@
 
     - Are stored in a Docker registry (Docker Hub)}
 
-  -  Container
+  - Container
 
     - If an image is a class, then a container is an instance of a class
 
@@ -97,7 +97,7 @@
       - Clear documentation
 
       - Docker incorporation dedicated a team for reviewing image content
-      
+
       - Security updates in a timely manner
 
 ## Hello World Docker
