@@ -20,44 +20,44 @@
       - Portable
 
 
-![Screenshot](./images/docker-architecture.png)
+  ![Screenshot](./images/docker-architecture.png)
 
-- Docker runs in a client / server architecture.
+  - Docker runs in a client / server architecture.
 
-  - The daemon is the server (docker server, docker engine)
-    - daemon is a computer program that runs in the background
-  - The user interacts with the daemon by using the docker client
-    - Client 1: Command line client
-    - Client 2: Kitematic (Graphical client)
+    - The daemon is the server (docker server, docker engine)
+      - daemon is a computer program that runs in the background
+    - The user interacts with the daemon by using the docker client
+      - Client 1: Command line client
+      - Client 2: Kitematic (Graphical client)
 
-  - In a typical Linux installation, the docker client, daemon and containers run in the same host.
+    - In a typical Linux installation, the docker client, daemon and containers run in the same host.
 
-    - You can also connect a docker client to a remote docker daemon
+      - You can also connect a docker client to a remote docker daemon
 
-  - Docker daemon can't run natively in Windows and Linux machines. That is because Docker daemon uses Linux specific kernel features. Having said that, we need to run Docker daemon inside a Linux VM to make it work.
-    - Lightweight docker vm that was made to run the docker daemon (HYPERKIT)
+    - Docker daemon can't run natively in Windows and Linux machines. That is because Docker daemon uses Linux specific kernel features. Having said that, we need to run Docker daemon inside a Linux VM to make it work.
+      - Lightweight docker vm that was made to run the docker daemon (HYPERKIT)
 
-      ![Screenshot](./images/mac-vs-linux.png)
+        ![Screenshot](./images/mac-vs-linux.png)
 
-    - Old installation process using docker-toolbox:
+      - Old installation process using docker-toolbox:
 
-      ![Screenshot](./images/docker-toolbox.png)
+        ![Screenshot](./images/docker-toolbox.png)
 
-      - Docker Client
-      - Docker Machine
-        - Lets you install docker engine in virtual hosts, and manage the hosts with docker machine commands.
-      - Docker Compose
-        - For defining and running multi container applications
+        - Docker Client
+        - Docker Machine
+          - Lets you install docker engine in virtual hosts, and manage the hosts with docker machine commands.
+        - Docker Compose
+          - For defining and running multi container applications
 
-      ![Screenshot](./images/docker-toolbox-installation.png)
+        ![Screenshot](./images/docker-toolbox-installation.png)
 
-      - ```docker-machine ls```: Lists all virtual machines running docker daemon
+        - ```docker-machine ls```: Lists all virtual machines running docker daemon
 
-  - After installation you can use the docker client
+    - After installation you can use the docker client
 
-    - ```docker info```: Outputs information about the docker environment (os, containers, images, etc)
+      - ```docker info```: Outputs information about the docker environment (os, containers, images, etc)
 
-    - ```docker version```: Prints the version of both docker client and docker server (docker daemon)
+      - ```docker version```: Prints the version of both docker client and docker server (docker daemon)
 
 
 ## Important Docker Concepts
