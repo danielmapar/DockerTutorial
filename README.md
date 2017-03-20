@@ -715,8 +715,7 @@
 
   - Specify a network
 
-  - ```
-  version: '2'
+  ```version: '2'
 
   networks:
     my_net:
@@ -736,17 +735,17 @@
       image: redis:3.2.0
       networks:
         - my_net
-    ```
+  ```
 
-    - ```docker-compose up -d```
+  - ```docker-compose up -d```
 
-    ![Screenshot](./images/docker-inspect-docker-compose-net.png)
+  ![Screenshot](./images/docker-inspect-docker-compose-net.png)
 
-    - ```docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' dockerapp_dockerapp_1```
+  - ```docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' dockerapp_dockerapp_1```
 
-    ![Screenshot](./images/docker-compose-containers-ids.png)
+  ![Screenshot](./images/docker-compose-containers-ids.png)
 
-    ![Screenshot](./images/docker-compose-network-example.png)
+  ![Screenshot](./images/docker-compose-network-example.png)
 
 ## Write and Run Unit Tests in Docker Containers
 
