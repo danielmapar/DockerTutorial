@@ -715,7 +715,8 @@
 
   - Specify a network
 
-  - ```version: '2'
+  - ```
+  version: '2'
 
   networks:
     my_net:
@@ -735,7 +736,7 @@
       image: redis:3.2.0
       networks:
         - my_net
-  ```
+    ```
 
     - ```docker-compose up -d```
 
