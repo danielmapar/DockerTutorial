@@ -2,11 +2,11 @@
 
 ## Introduction to Virtualization Technologies
 
-![Screenshot](./images/pre%20virtualization.png)
+  ![Screenshot](./images/pre%20virtualization.png)
 
-![Screenshot](./images/hypervisor-based virtualization.png)
+  ![Screenshot](./images/hypervisor-based virtualization.png)
 
-![Screenshot](./images/container-based virtualization.png)
+  ![Screenshot](./images/container-based virtualization.png)
 
   - Hypervisors approach handles many VMs with their own copy of the OS/Kernel and only manages resources at hardware level.
 
