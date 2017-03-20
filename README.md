@@ -715,8 +715,7 @@
 
   - Specify a network
 
-  ```
-  version: '2'
+  ```version: '2'
 
   networks:
     my_net:
