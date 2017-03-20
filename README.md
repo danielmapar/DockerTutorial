@@ -819,8 +819,7 @@
 
   ![Screenshot](./images/push-docker-image-to-dockerhub.png)
 
-  ```
-  deployment:
+  ```deployment:
   hub:
     branch: /.*/ # [cicle_ci_publish, master]
     commands:
@@ -829,7 +828,6 @@
       - docker tag dockerapp_dockerapp $DOCKER_HUB_USER_ID/dockerapp:latest
       - docker push $DOCKER_HUB_USER_ID/dockerapp:$CIRCLE_SHA1 # $CIRCLE_SHA1 current commit hash of the repository
       - docker push  $DOCKER_HUB_USER_ID/dockerapp:latest
-
   ```
 
   ![Screenshot](./images/cicle-ci-env1.png)
