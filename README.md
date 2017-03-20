@@ -1034,8 +1034,7 @@
 
     - We will need to make one change to the docker-compose file
 
-    ```
-    version: '2'
+    ```version: '2'
     services:
       dockerapp:
         extends:
