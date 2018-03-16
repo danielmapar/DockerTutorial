@@ -400,7 +400,7 @@
 
   - ```CMD ["python", "app.py"]```: Since we specified ```/app``` as an working dir, we can call app.py directly.
 
-  - ```docker build danielmapar/flask-app:1.0 -f Dockerfile .```: Build image
+  - ```docker build -t danielmapar/flask-app:1.0 -f Dockerfile .```: Build image
 
   - ```docker run -d -p 5000:5000 danielmapar/flask-app:1.0```: Run container
 
